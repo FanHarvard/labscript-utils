@@ -58,7 +58,7 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
         # Check that sys.stdout.fileno is callable, which is needed below. It is NOT
         # callable in Jupyter notebooks.
         stdout_fileno = sys.stdout.fileno()
-    except UnsupportedOperation:
+    except (UnsupportedOperation, AttributeError):
         # In this case the code is likely being run from a Jupyter notebook, warn the
         # user that log messages won't be printed to stdout or stderr.
         warnings.warn(
