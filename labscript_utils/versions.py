@@ -95,7 +95,11 @@ def _get_metadata_version(project_name, import_path):
         The metadata version for a package with the given project name located at
         the given import path, or None if there is no such package.
     """
-    
+    try:
+        return importlib_metadata.version(project_name)
+    except importlib_metadata.PackageNotFoundError:
+        pass
+
     for finder in sys.meta_path:
         if hasattr(finder, 'find_distributions'):
             context = importlib_metadata.DistributionFinder.Context(
@@ -184,12 +188,6 @@ def get_version(import_name, project_name=None, import_path=None):
             return NotFound
     if not os.path.exists(os.path.join(import_path, import_name)):
         return NotFound
-    try:
-        # Check if setuptools_scm gives us a version number, for the case that it's a
-        # git repo or PyPI tarball:
-        return setuptools_scm.get_version(import_path)
-    except LookupError:
-        pass
     # Check if importlib_metadata knows about this module:
     version = _get_metadata_version(project_name, import_path)
     if version is not None:
@@ -208,6 +206,12 @@ def get_version(import_name, project_name=None, import_path=None):
     version = _get_literal_version(module_file)
     if version is not None:
         return version
+    try:
+        # Last resort for editable checkouts or source trees without installed
+        # metadata or version literals.
+        return setuptools_scm.get_version(import_path)
+    except LookupError:
+        pass
     return NoVersionInfo
 
 
